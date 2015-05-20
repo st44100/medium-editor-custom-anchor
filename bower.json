@@ -1,0 +1,21 @@
+{
+  "name": "medium-editor-custom-anchor",
+  "version": "0.0.1",
+  "authors": [
+    "Hiroyuki SATAKE <st44100@gmail.com>"
+  ],
+  "description": "Custom anchor plugin for Medium Editor",
+  "main": "dist/js/medium-editor-custom-anchor.js",
+  "keywords": [
+    "Medium",
+    "Editor"
+  ],
+  "license": "WTFPL",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

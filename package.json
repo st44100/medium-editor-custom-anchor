@@ -1,0 +1,22 @@
+{
+  "name": "medium-editor-custom-anchor",
+  "version": "0.0.1",
+  "description": "Custom anchor plugin for Medium Editor",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "keywords": [
+    "Medium",
+    "Editor"
+  ],
+  "author": "Hiroyuki SATAKE",
+  "license": "WTFPL",
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-sass": "^2.0.1",
+    "jasmine": "^2.3.1"
+  }
+}

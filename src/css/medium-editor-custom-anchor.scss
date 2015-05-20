@@ -1,0 +1,15 @@
+// Overwrite medium editor anchor plugin style
+.medium-editor-toolbar-form {
+  margin-top: 2px
+
+  label {
+    padding: 0 0 0 5px !important;
+    font-size: 12px !important;
+    width: 1px !important;
+    display: inline-block !important;
+  }
+}
+
+.medium-editor-anchor-form {
+  text-align: center;
+}

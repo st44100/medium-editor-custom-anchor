@@ -13,7 +13,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Util.isMetaCtrlKey(evt)
  * Util.keyCode.ENTER
  * Util.keyCode.ESCAPE
- * AnchorExtension = Util.derives(DefaultButton, AnchorDerived);
  *
  */
 
@@ -47,15 +46,6 @@ var Util = {
     ESCAPE: 27,
     SPACE: 32,
     DELETE: 46
-  },
-  derives: function derives(base, dist, src) {
-    var origPrototype = derived.prototype;
-    function Proto() {}
-    Proto.prototype = base.prototype;
-    derived.prototype = new Proto();
-    derived.prototype.constructor = base;
-    derived.prototype = copyInto(false, derived.prototype, origPrototype);
-    return derived;
   }
 };
 
@@ -132,10 +122,14 @@ var MediumEditorAnchorExtension = (function () {
   }, {
     key: 'getTemplate',
     value: function getTemplate() {
-      var template = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank" class="checkbox__mark"></label>\n              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
+      var template = '';
+      var defaultTpl = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank" class="checkbox__mark"></label>\n              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
 
-      var defaultTpl = '\n      <input type="text" class="medium-editor-toolbar-input" placeholder="' + this.base.options.anchorInputPlaceholder + '">\n      <a href="#" class="medium-editor-toolbar-save">' + (this.base.options.buttonLabels === 'fontawesome' ? '<i class="fa fa-check"></i>' : this.formSaveLabel) + '</a>\n      <a href="#" class="medium-editor-toolbar-close">\n      ' + (this.base.options.buttonLabels === 'fontawesome' ? '<i class="fa fa-times"></i>' : this.formCloseLabel) + '\n      </a>\n      ';
-
+      if (!this.base.options.template) {
+        template = defaultTpl;
+      } else {
+        template = this.base.options.template;
+      }
       // if (this.base.options.anchorTarget) {
       //   tempalte += `
       //     <input type="checkbox" class="medium-editor-toolbar-anchor-target">
@@ -203,6 +197,10 @@ var MediumEditorAnchorExtension = (function () {
         opts.target = '_blank';
       } else {
         opts.target = '_self';
+      }
+
+      if (buttonCheckbox && buttonCheckbox.checked) {
+        opts.buttonClass = this.base.options.anchorButtonClass;
       }
       return opts;
     }

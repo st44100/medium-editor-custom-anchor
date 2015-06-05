@@ -5,7 +5,6 @@
  * Util.isMetaCtrlKey(evt)
  * Util.keyCode.ENTER
  * Util.keyCode.ESCAPE
- * AnchorExtension = Util.derives(DefaultButton, AnchorDerived);
  *
  */
 
@@ -39,15 +38,6 @@ let Util = {
     ESCAPE: 27,
     SPACE: 32,
     DELETE: 46
-  },
-  derives: (base, dist, src) => {
-    var origPrototype = derived.prototype;
-    function Proto() { }
-    Proto.prototype = base.prototype;
-    derived.prototype = new Proto();
-    derived.prototype.constructor = base;
-    derived.prototype = copyInto(false, derived.prototype, origPrototype);
-    return derived;
   }
 };
 
@@ -117,7 +107,8 @@ export default class MediumEditorAnchorExtension {
   }
 
   getTemplate () {
-    let template = `
+    let template = ''
+    let defaultTpl = `
       <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form">
         <section style="position:relative;" class="edit-box edit-box--narrow">
           <div class="edit-box__inner">
@@ -144,18 +135,11 @@ export default class MediumEditorAnchorExtension {
       <a href="#" class="medium-editor-toolbar-close"></a>
       `;
 
-    let defaultTpl = `
-      <input type="text" class="medium-editor-toolbar-input" placeholder="${this.base.options.anchorInputPlaceholder}">
-      <a href="#" class="medium-editor-toolbar-save">${
-        this.base.options.buttonLabels === 'fontawesome' ? '<i class="fa fa-check"></i>' : this.formSaveLabel
-      }</a>
-      <a href="#" class="medium-editor-toolbar-close">
-      ${
-        this.base.options.buttonLabels === 'fontawesome' ? '<i class="fa fa-times"></i>' : this.formCloseLabel
-      }
-      </a>
-      `;
-
+    if (!this.base.options.template) {
+        template = defaultTpl;
+    } else {
+        template = this.base.options.template;
+    }
     // if (this.base.options.anchorTarget) {
     //   tempalte += `
     //     <input type="checkbox" class="medium-editor-toolbar-anchor-target">
@@ -219,6 +203,10 @@ export default class MediumEditorAnchorExtension {
       opts.target = '_blank';
     } else {
       opts.target = '_self';
+    }
+
+    if (buttonCheckbox && buttonCheckbox.checked) {
+        opts.buttonClass = this.base.options.anchorButtonClass;
     }
     return opts;
   }

@@ -58,6 +58,7 @@ var MediumEditorAnchorExtension = (function () {
     // if this.parent = true, `this.base` become a reference to Medium Editor.
     this.parent = true;
     this.options = {
+      key: 'enter',
       name: 'anchor',
       action: 'createLink',
       aria: 'link',
@@ -123,7 +124,7 @@ var MediumEditorAnchorExtension = (function () {
     key: 'getTemplate',
     value: function getTemplate() {
       var template = '';
-      var defaultTpl = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank" class="checkbox__mark"></label>\n              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
+      var defaultTpl = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form" onsubmit="return false;">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank" class="checkbox__mark"></label>\n              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
 
       if (!this.base.options.template) {
         template = defaultTpl;
@@ -297,6 +298,11 @@ var MediumEditorAnchorExtension = (function () {
       return this.button;
     }
   }, {
+    key: 'getTagNames',
+    value: function getTagNames() {
+      return typeof this.options.tagNames === 'function' ? this.options.tagNames(this.base.options) : this.options.tagNames;
+    }
+  }, {
     key: 'createButton',
     value: function createButton() {
       var button = this.base.options.ownerDocument.createElement('button');
@@ -324,6 +330,66 @@ var MediumEditorAnchorExtension = (function () {
     key: 'getAria',
     value: function getAria() {
       return typeof this.options.aria === 'function' ? this.options.aria(this.base.options) : this.options.aria;
+    }
+  }, {
+    key: 'isActive',
+    value: function isActive() {
+      return this.button.classList.contains(this.base.options.activeButtonClass);
+    }
+  }, {
+    key: 'setInactive',
+    value: function setInactive() {
+      this.button.classList.remove(this.base.options.activeButtonClass);
+      delete this.knownState;
+    }
+  }, {
+    key: 'setActive',
+    value: function setActive() {
+      this.button.classList.add(this.base.options.activeButtonClass);
+      delete this.knownState;
+    }
+  }, {
+    key: 'queryCommandState',
+    value: function queryCommandState() {
+      var queryState = null;
+      if (this.options.useQueryState) {
+        queryState = this.base.queryCommandState(this.getAction());
+      }
+      return queryState;
+    }
+  }, {
+    key: 'isAlreadyApplied',
+    value: function isAlreadyApplied(node) {
+      var isMatch = false;
+      var tagNames = this.getTagNames();
+      var styleVals = undefined;
+      var computedStyle = undefined;
+
+      if (this.knownState === false || this.knownState === true) {
+        return this.knownState;
+      }
+
+      if (tagNames && tagNames.length > 0 && node.tagName) {
+        isMatch = tagNames.indexOf(node.tagName.toLowerCase()) !== -1;
+      }
+
+      if (!isMatch && this.options.style) {
+        styleVals = this.options.style.value.split('|');
+        computedStyle = this.base.options.contentWindow.getComputedStyle(node, null).getPropertyValue(this.options.style.prop);
+        styleVals.forEach(function (val) {
+          if (!this.knownState) {
+            isMatch = computedStyle.indexOf(val) !== -1;
+            // text-decoration is not inherited by default
+            // so if the computed style for text-decoration doesn't match
+            // don't write to knownState so we can fallback to other checks
+            if (isMatch || this.options.style.prop !== 'text-decoration') {
+              this.knownState = isMatch;
+            }
+          }
+        }, this);
+      }
+
+      return isMatch;
     }
   }]);
 

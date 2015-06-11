@@ -1,7 +1,7 @@
 // ES6
 'use strict'
 
-export default class MediumEditorAnchorExtension {
+export default class MediumEditorAnchorPreviewExtension {
 
   constructor(id = null, instance) {
     // if this.parent = true, `this.base` become a reference to Medium Editor.
@@ -124,7 +124,7 @@ export default class MediumEditorAnchorExtension {
     if (anchorExtension && activeAnchor) {
       this.base.selectedParentElement(this.activeAnchor);
 
-      this.base.delay( => {
+      this.base.delay( () => {
         if (activeAnchor) {
           anchorExtension.showForm(activeAnchor.attributes.href.value);
           activeAnchor = null;
@@ -156,7 +156,7 @@ export default class MediumEditorAnchorExtension {
       this.instance_handleAnchorMouseout = this.handleAnchorMouseout.bind(this)
       this.base.on(this.anchorPreview, 'mouseout', this.instance_handleAnchorMouseout);
 
-      this.base.delay( => {
+      this.base.delay( () => {
         if (this.anchorPreview)  {
           this.showPreview(this.anchorPreview);
         }

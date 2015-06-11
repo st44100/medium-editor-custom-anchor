@@ -42,14 +42,13 @@ let Util = {
 };
 
 
-
-
 export default class MediumEditorAnchorExtension {
 
   constructor(id = null, instance) {
     // if this.parent = true, `this.base` become a reference to Medium Editor.
     this.parent = true;
     this.options = {
+      key: 'enter',
       name: 'anchor' ,
       action: 'createLink',
       aria: 'link',
@@ -65,13 +64,13 @@ export default class MediumEditorAnchorExtension {
 
   // invoke from MediumEditor
   init (instance) {
-      this.base = instance;
+    this.base = instance;
 
-      this.button = this.createButton();
-      this.base.on(this.button, 'click', this.handleClick.bind(this));
-      if (this.options.key) {
-          this.base.subscribe('editableKeydown', this.handleKeydown.bind(this));
-      }
+    this.button = this.createButton();
+    this.base.on(this.button, 'click', this.handleClick.bind(this));
+    if (this.options.key) {
+      this.base.subscribe('editableKeydown', this.handleKeydown.bind(this));
+    }
   }
 
   handleClick (evt) {
@@ -109,7 +108,7 @@ export default class MediumEditorAnchorExtension {
   getTemplate () {
     let template = ''
     let defaultTpl = `
-      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form">
+      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form" onsubmit="return false;">
         <section style="position:relative;" class="edit-box edit-box--narrow">
           <div class="edit-box__inner">
             <div class="edit-box__body">
@@ -291,6 +290,10 @@ export default class MediumEditorAnchorExtension {
     return this.button;
   }
 
+  getTagNames () {
+    return (typeof this.options.tagNames === 'function') ? this.options.tagNames(this.base.options) : this.options.tagNames;
+  }
+
   createButton () {
     let button = this.base.options.ownerDocument.createElement('button');
     let content = this.options.contentDefault;
@@ -315,5 +318,57 @@ export default class MediumEditorAnchorExtension {
 
   getAria() {
     return (typeof this.options.aria === 'function') ? this.options.aria(this.base.options) : this.options.aria;
+  }
+
+  isActive() {
+    return this.button.classList.contains(this.base.options.activeButtonClass);
+  }
+  setInactive () {
+    this.button.classList.remove(this.base.options.activeButtonClass);
+    delete this.knownState;
+  }
+
+  setActive () {
+    this.button.classList.add(this.base.options.activeButtonClass);
+    delete this.knownState;
+  }
+  queryCommandState () {
+      let queryState = null;
+      if (this.options.useQueryState) {
+          queryState = this.base.queryCommandState(this.getAction());
+      }
+      return queryState;
+  }
+  isAlreadyApplied (node) {
+    let isMatch = false;
+    let tagNames = this.getTagNames();
+    let styleVals;
+    let computedStyle;
+
+    if (this.knownState === false || this.knownState === true) {
+        return this.knownState;
+    }
+
+    if (tagNames && tagNames.length > 0 && node.tagName) {
+        isMatch = tagNames.indexOf(node.tagName.toLowerCase()) !== -1;
+    }
+
+    if (!isMatch && this.options.style) {
+        styleVals = this.options.style.value.split('|');
+        computedStyle = this.base.options.contentWindow.getComputedStyle(node, null).getPropertyValue(this.options.style.prop);
+        styleVals.forEach(function (val) {
+            if (!this.knownState) {
+                isMatch = (computedStyle.indexOf(val) !== -1);
+                // text-decoration is not inherited by default
+                // so if the computed style for text-decoration doesn't match
+                // don't write to knownState so we can fallback to other checks
+                if (isMatch || this.options.style.prop !== 'text-decoration') {
+                    this.knownState = isMatch;
+                }
+            }
+        }, this);
+    }
+
+    return isMatch;
   }
 }

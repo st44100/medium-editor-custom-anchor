@@ -45,7 +45,9 @@ export default class MediumEditorAnchorPreviewExtension {
       contentDefault:'<b>#</b>',
       contentFA: '<i class="fa fa-link"></i>',
       removeLabel: 'Remove',
-      editLabel: 'Edit'
+      editLabel: 'Edit',
+      hideDelay: 500,
+      diffLeft: 20
     };
     extend(this.options, options)
   }
@@ -112,7 +114,9 @@ export default class MediumEditorAnchorPreviewExtension {
 
   hidePreview () {
     this.anchorPreview.classList.remove('medium-editor-anchor-preview-active');
-    this.anchorAnchor = null;
+    setTimeout(() => {
+      this.anchorAnchor = null;
+    }, this.options.hideDelay);
   }
 
   showPreview (anchorEl) {
@@ -148,7 +152,7 @@ export default class MediumEditorAnchorPreviewExtension {
     halfOffsetWidth = this.anchorPreview.offsetWidth / 2;
     defaultLeft = this.base.options.diffLeft - halfOffsetWidth;
 
-    this.anchorPreview.style.top = Math.round(buttonHeight + boundary.bottom - this.base.options.diffTop + this.base.options.contentWindow.pageYOffset - this.anchorPreview.offsetHeight) - 20 + 'px';
+    this.anchorPreview.style.top = Math.round(buttonHeight + boundary.bottom - this.base.options.diffTop + this.base.options.contentWindow.pageYOffset - this.anchorPreview.offsetHeight) + 5 + 'px';
 
     if (middleBoundary < halfOffsetWidth) {
       this.anchorPreview.style.left = defaultLeft + halfOffsetWidth + 'px';

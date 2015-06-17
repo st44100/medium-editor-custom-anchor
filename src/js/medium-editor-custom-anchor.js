@@ -76,6 +76,14 @@ export default class MediumEditorAnchorExtension {
   handleClick (evt) {
     evt.preventDefault();
     evt.stopPropagation();
+    let sel = this.base.options.ownerDocument.getSelection();
+    if (sel.focusNode === null) {
+      if (this.isDisplayed()) {
+        this.hideForm();
+        this.base.restoreSelection();
+      }
+      return
+    }
 
     let selectedParentElement = this.base.getSelectedParentElement(Util.getSelectionRange(this.base.options.ownerDocument));
     if (selectedParentElement.tagName && selectedParentElement.tagName.toLowerCase() === 'a') {

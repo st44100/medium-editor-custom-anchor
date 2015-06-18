@@ -170,10 +170,12 @@ export default class MediumEditorAnchorExtension {
   hideForm () {
     this.getForm().style.display = 'none';
     this.getInput().value = '';
+    this.getTargetInput().checked = false;
   }
 
-  showForm (linkValue = '') {
+  showForm (linkValue = '', targetValue = false) {
     let input = this.getInput();
+    let targetInput = this.getTargetInput();
 
     this.base.saveSelection();
     //this.base.hideToolbarDefaultActions();
@@ -181,6 +183,7 @@ export default class MediumEditorAnchorExtension {
     this.base.setToolbarPosition();
 
     input.value = linkValue;
+    targetInput.checked = targetValue;
     input.focus();
   }
 
@@ -263,8 +266,10 @@ export default class MediumEditorAnchorExtension {
   }
 
   getInput () {
-    let form = this.getForm();
     return this.getForm().querySelector('input.medium-editor-toolbar-input');
+  }
+  getTargetInput () {
+    return this.getForm().querySelector('input.medium-editor-toolbar-anchor-target');
   }
 
   handleTextboxKeyup (evt) {

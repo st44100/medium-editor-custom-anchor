@@ -210,7 +210,8 @@ export default class MediumEditorAnchorPreviewExtension {
 
       this.base.delay( () => {
         if (activeAnchor) {
-          anchorExtension.showForm(activeAnchor.attributes.href.value);
+          let targetValue = (activeAnchor.attributes.target && activeAnchor.attributes.target.nodeValue === '_blank');
+          anchorExtension.showForm(activeAnchor.attributes.href.value, targetValue);
           activeAnchor = null;
         }
       });

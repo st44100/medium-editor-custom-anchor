@@ -129,9 +129,9 @@ export default class MediumEditorAnchorExtension {
           </div>
           <div class="edit-box__action edit-box__action--justify">
             <span class="checkbox">
-              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">
-              <label for="target-blank" class="checkbox__mark"></label>
-              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>
+              <input type="checkbox" id="target-blank-${this.base.id}}" class="medium-editor-toolbar-anchor-target checkbox__item">
+              <label for="target-blank-${this.base.id}}" class="checkbox__mark"></label>
+              <label for="target-blank-${this.base.id}}" class="checkbox__label txt">新規ウィンドウ</label>
             </span>
             <span>
               <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>

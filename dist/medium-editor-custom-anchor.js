@@ -1,13 +1,5 @@
 // ES6
 'use strict';
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
 /*
  * Util.getSelectionRange()
  * Util.isMetaCtrlKey(evt)
@@ -16,9 +8,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  *
  */
 
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
 function extend(dest, src) {
   Object.keys(src).forEach(function (k) {
-    dsst[k] = src[k];
+    dest[k] = src[k];
   });
 }
 
@@ -50,8 +50,8 @@ var Util = {
 };
 
 var MediumEditorAnchorExtension = (function () {
-  function MediumEditorAnchorExtension(_x, instance) {
-    var id = arguments[0] === undefined ? null : arguments[0];
+  function MediumEditorAnchorExtension(options, instance) {
+    if (options === undefined) options = {};
 
     _classCallCheck(this, MediumEditorAnchorExtension);
 
@@ -70,12 +70,13 @@ var MediumEditorAnchorExtension = (function () {
     this.hasForm = true;
     this.formSaveLabel = '&#10003;';
     this.formCloseLabel = '&times;';
+    extend(this.options, options);
   }
+
+  // invoke from MediumEditor
 
   _createClass(MediumEditorAnchorExtension, [{
     key: 'init',
-
-    // invoke from MediumEditor
     value: function init(instance) {
       this.base = instance;
 
@@ -90,6 +91,14 @@ var MediumEditorAnchorExtension = (function () {
     value: function handleClick(evt) {
       evt.preventDefault();
       evt.stopPropagation();
+      var sel = this.base.options.ownerDocument.getSelection();
+      if (sel.focusNode === null) {
+        if (this.isDisplayed()) {
+          this.hideForm();
+          this.base.restoreSelection();
+        }
+        return;
+      }
 
       var selectedParentElement = this.base.getSelectedParentElement(Util.getSelectionRange(this.base.options.ownerDocument));
       if (selectedParentElement.tagName && selectedParentElement.tagName.toLowerCase() === 'a') {
@@ -124,12 +133,11 @@ var MediumEditorAnchorExtension = (function () {
     key: 'getTemplate',
     value: function getTemplate() {
       var template = '';
-      var defaultTpl = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form" onsubmit="return false;">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank" class="checkbox__mark"></label>\n              <label for="target-blank" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
-
-      if (!this.base.options.template) {
+      var defaultTpl = '\n      <form name="blockImageAnchorForm" novalidate="novalidate" class="medium-editor-anchor-form" onsubmit="return false;">\n        <section style="position:relative;" class="edit-box edit-box--narrow">\n          <div class="edit-box__inner">\n            <div class="edit-box__body">\n              <div class="input input--xs">\n                <div class="input__inner">\n                  <input placeholder="http://" type="url" name="link" class="medium-editor-toolbar-input input__input js-block-image-anchor-input">\n                </div>\n              </div>\n            </div>\n          </div>\n          <div class="edit-box__action edit-box__action--justify">\n            <span class="checkbox">\n              <input type="checkbox" id="target-blank-' + this.base.id + '}" class="medium-editor-toolbar-anchor-target checkbox__item">\n              <label for="target-blank-' + this.base.id + '}" class="checkbox__mark"></label>\n              <label for="target-blank-' + this.base.id + '}" class="checkbox__label txt">新規ウィンドウ</label>\n            </span>\n            <span>\n              <button type="button" class="medium-editor-toolbar-save btn btn--primary btn--xs">OK</button>\n            </span>\n          </div>\n        </section>\n      </form>\n      <a href="#" class="medium-editor-toolbar-close"></a>\n      ';
+      if (!this.options.template) {
         template = defaultTpl;
       } else {
-        template = this.base.options.template;
+        template = this.options.template;
       }
       // if (this.base.options.anchorTarget) {
       //   tempalte += `
@@ -153,13 +161,16 @@ var MediumEditorAnchorExtension = (function () {
     value: function hideForm() {
       this.getForm().style.display = 'none';
       this.getInput().value = '';
+      this.getTargetInput().checked = false;
     }
   }, {
     key: 'showForm',
     value: function showForm() {
-      var linkValue = arguments[0] === undefined ? '' : arguments[0];
+      var linkValue = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+      var targetValue = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
       var input = this.getInput();
+      var targetInput = this.getTargetInput();
 
       this.base.saveSelection();
       //this.base.hideToolbarDefaultActions();
@@ -167,6 +178,7 @@ var MediumEditorAnchorExtension = (function () {
       this.base.setToolbarPosition();
 
       input.value = linkValue;
+      targetInput.checked = targetValue;
       input.focus();
     }
   }, {
@@ -258,8 +270,12 @@ var MediumEditorAnchorExtension = (function () {
   }, {
     key: 'getInput',
     value: function getInput() {
-      var form = this.getForm();
       return this.getForm().querySelector('input.medium-editor-toolbar-input');
+    }
+  }, {
+    key: 'getTargetInput',
+    value: function getTargetInput() {
+      return this.getForm().querySelector('input.medium-editor-toolbar-anchor-target');
     }
   }, {
     key: 'handleTextboxKeyup',

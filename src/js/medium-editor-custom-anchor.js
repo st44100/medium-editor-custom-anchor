@@ -10,7 +10,7 @@
 
 function extend(dest, src) {
   Object.keys(src).forEach((k) => {
-    dsst[k] = src[k]
+    dest[k] = src[k]
   });
 }
 
@@ -44,7 +44,7 @@ let Util = {
 
 export default class MediumEditorAnchorExtension {
 
-  constructor(id = null, instance) {
+  constructor(options = {}, instance) {
     // if this.parent = true, `this.base` become a reference to Medium Editor.
     this.parent = true;
     this.options = {
@@ -60,6 +60,7 @@ export default class MediumEditorAnchorExtension {
     this.hasForm = true;
     this.formSaveLabel = '&#10003;';
     this.formCloseLabel = '&times;';
+    extend(this.options, options)
   }
 
   // invoke from MediumEditor
@@ -141,11 +142,10 @@ export default class MediumEditorAnchorExtension {
       </form>
       <a href="#" class="medium-editor-toolbar-close"></a>
       `;
-
-    if (!this.base.options.template) {
+    if (!this.options.template) {
         template = defaultTpl;
     } else {
-        template = this.base.options.template;
+        template = this.options.template;
     }
     // if (this.base.options.anchorTarget) {
     //   tempalte += `

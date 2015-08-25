@@ -17,5 +17,9 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "medium-editor": "4.4.*",
+    "jquery": "~2.1.4"
+  }
 }

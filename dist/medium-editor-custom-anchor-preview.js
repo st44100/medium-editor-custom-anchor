@@ -56,7 +56,9 @@ var MediumEditorAnchorPreviewExtension = (function () {
       removeLabel: 'Remove',
       editLabel: 'Edit',
       hideDelay: 500,
-      diffLeft: 20
+      diffLeft: 20,
+      limitPositonLeft: false,
+      limitPositonRight: false
     };
     extend(this.options, options);
   }
@@ -168,19 +170,29 @@ var MediumEditorAnchorPreviewExtension = (function () {
       var middleBoundary = (boundary.left + boundary.right) / 2;
       var halfOffsetWidth = undefined;
       var defaultLeft = undefined;
-
+      var offsetLeft = undefined;
       halfOffsetWidth = this.anchorPreview.offsetWidth / 2;
       defaultLeft = this.base.options.diffLeft - halfOffsetWidth;
 
       this.anchorPreview.style.top = Math.round(buttonHeight + boundary.bottom - this.base.options.diffTop + this.base.options.contentWindow.pageYOffset - this.anchorPreview.offsetHeight) + 5 + 'px';
 
       if (middleBoundary < halfOffsetWidth) {
-        this.anchorPreview.style.left = defaultLeft + halfOffsetWidth + 'px';
+        offsetLeft = defaultLeft + halfOffsetWidth;
       } else if (this.base.options.contentWindow.innerWidth - middleBoundary < halfOffsetWidth) {
-        this.anchorPreview.style.left = this.base.options.contentWindow.innerWidth + defaultLeft - halfOffsetWidth + 'px';
+        offsetLeft = this.base.options.contentWindow.innerWidth + defaultLeft - halfOffsetWidth;
       } else {
-        this.anchorPreview.style.left = defaultLeft + middleBoundary + 'px';
+        offsetLeft = defaultLeft + middleBoundary;
       }
+
+      if (this.options.limitPositonLeft !== false && this.options.limitPositonLeft > offsetLeft) {
+        offsetLeft = this.options.limitPositonLeft;
+      }
+
+      if (this.options.limitPositonRight !== false && this.options.limitPositonRight < offsetLeft + this.anchorPreview.offsetWidth) {
+        offsetLeft = this.options.limitPositonRight - this.anchorPreview.offsetWidth;
+      }
+
+      this.anchorPreview.style.left = offsetLeft + 'px';
     }
   }, {
     key: 'attachToEditables',

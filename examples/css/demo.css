@@ -1,3 +1,6 @@
+body {
+  padding: 20px; }
+
 .medium-editor-toolbar-form {
   margin-top: 10px;
   position: absolute;
@@ -16,3 +19,7 @@
   .medium-editor-toolbar-form .toolbar {
     display: flex;
     justify-content: space-between; }
+
+.editable {
+  margin: 20px 100px;
+  padding: 10px; }

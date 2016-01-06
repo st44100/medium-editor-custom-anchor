@@ -1,0 +1,18 @@
+.medium-editor-toolbar-form {
+  margin-top: 10px;
+  position: absolute;
+  left: 0px;
+  right: 0px; }
+  .medium-editor-toolbar-form fieldset {
+    box-sizing: border-box;
+    padding: 6px;
+    width: 100%; }
+  .medium-editor-toolbar-form .medium-editor-toolbar-input {
+    background-color: white;
+    border-radius: 3px;
+    color: #333;
+    height: 24px;
+    width: 100%; }
+  .medium-editor-toolbar-form .toolbar {
+    display: flex;
+    justify-content: space-between; }

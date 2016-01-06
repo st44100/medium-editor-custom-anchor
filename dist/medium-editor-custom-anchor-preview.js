@@ -1,6 +1,5 @@
 // ES6
 'use strict';
-
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
@@ -9,10 +8,39 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var MediumEditorAnchorPreviewExtension = (function () {
-  function MediumEditorAnchorPreviewExtension(_x, instance) {
-    var id = arguments[0] === undefined ? null : arguments[0];
+function extend(dest, src) {
+  Object.keys(src).forEach(function (k) {
+    dest[k] = src[k];
+  });
+}
 
+var Util = {
+  getSelectionRange: function getSelectionRange(ownerDocument) {
+    var selection = ownerDocument.getSelection();
+    if (selection.rangeCount == 0) {
+      return null;
+    }
+    return selection.getRangeAt(0);
+  },
+
+  isMetaCtrlKey: function isMetaCtrlKey(event) {
+    if (this.isMac && event.metaKey || !this.isMac && event.ctrlKey) {
+      return true;
+    }
+    return false;
+  },
+  keyCode: {
+    BACKSPACE: 8,
+    TAB: 9,
+    ENTER: 13,
+    ESCAPE: 27,
+    SPACE: 32,
+    DELETE: 46
+  }
+};
+
+var MediumEditorAnchorPreviewExtension = (function () {
+  function MediumEditorAnchorPreviewExtension(options) {
     _classCallCheck(this, MediumEditorAnchorPreviewExtension);
 
     // if this.parent = true, `this.base` become a reference to Medium Editor.
@@ -24,18 +52,22 @@ var MediumEditorAnchorPreviewExtension = (function () {
       aria: 'link',
       tagNames: ['a'],
       contentDefault: '<b>#</b>',
-      contentFA: '<i class="fa fa-link"></i>'
+      contentFA: '<i class="fa fa-link"></i>',
+      removeLabel: 'Remove',
+      editLabel: 'Edit',
+      hideDelay: 500,
+      diffLeft: 20
     };
+    extend(this.options, options);
   }
+
+  // invoke from MediumEditor
 
   _createClass(MediumEditorAnchorPreviewExtension, [{
     key: 'init',
-
-    // invoke from MediumEditor
     value: function init(instance) {
       this.base = instance;
       this.anchorPreview = this.createPreview();
-
       this.base.options.elementsContainer.appendChild(this.anchorPreview);
       this.attachToEditables();
     }
@@ -54,11 +86,14 @@ var MediumEditorAnchorPreviewExtension = (function () {
       el.id = 'medium-editor-anchor-preview-' + this.base.id;
       el.className = 'medium-editor-anchor-preview';
       el.innerHTML = this.getTemplate();
-      this.attachFormEvents(form);
+
+      this.attachPreviewEvents(el);
 
       this.base.on(el, 'click', function (e) {
         return _this.handleClick(e);
       });
+
+      return el;
     }
   }, {
     key: 'getTemplate',
@@ -68,9 +103,18 @@ var MediumEditorAnchorPreviewExtension = (function () {
       if (this.options.template) {
         template = this.options.template;
       } else {
-        template = '\n        <div class="medium-editor-toolbar-anchor-preview" id="medium-editor-toolbar-anchor-preview">\n          <i class="medium-editor-toolbar-anchor-preview-inner"></i>\n        </div>\n      ';
+        template = '\n        <div class="medium-editor-toolbar-anchor-preview" id="medium-editor-toolbar-anchor-preview">\n          <i class="medium-editor-toolbar-anchor-preview-inner"></i>\n          <button type="button" class="medium-editor-toolbar-anchor-preview-button medium-editor-toolbar-anchor-preview-button-edit">' + this.options.editLabel + '</button>\n          <button type="button" class="medium-editor-toolbar-anchor-preview-button medium-editor-toolbar-anchor-preview-button-remove">' + this.options.removeLabel + '</button>\n        </div>\n      ';
       }
       return template;
+    }
+  }, {
+    key: 'attachPreviewEvents',
+    value: function attachPreviewEvents(el) {
+      var edit = el.querySelector('.medium-editor-toolbar-anchor-preview-button-edit');
+      var remove = el.querySelector('.medium-editor-toolbar-anchor-preview-button-remove');
+
+      this.base.on(edit, 'click', this.handleEditButtonClick.bind(this));
+      this.base.on(remove, 'click', this.handleRemoveButtonClick.bind(this));
     }
   }, {
     key: 'deactivate',
@@ -85,8 +129,12 @@ var MediumEditorAnchorPreviewExtension = (function () {
   }, {
     key: 'hidePreview',
     value: function hidePreview() {
+      var _this2 = this;
+
       this.anchorPreview.classList.remove('medium-editor-anchor-preview-active');
-      this.anchorPreview = null;
+      setTimeout(function () {
+        _this2.anchorAnchor = null;
+      }, this.options.hideDelay);
     }
   }, {
     key: 'showPreview',
@@ -96,6 +144,7 @@ var MediumEditorAnchorPreviewExtension = (function () {
       }
 
       if (this.previewValueSelector) {
+        var a = this.anchorPreview.querySelector(this.previewValueSelector);
         this.anchorPreview.querySelector(this.previewValueSelector).textContent = anchorEl.attributes.href.value;
       }
       this.anchorPreview.classList.remove('medium-toolbar-arrow-over');
@@ -115,15 +164,15 @@ var MediumEditorAnchorPreviewExtension = (function () {
     key: 'positionPreview',
     value: function positionPreview() {
       var buttonHeight = 40;
-      var boundry = this.activeAnchor.getBoundingClientRect();
-      var middleBoundary = (boundry.left + boundry.right) / 2;
+      var boundary = this.activeAnchor.getBoundingClientRect();
+      var middleBoundary = (boundary.left + boundary.right) / 2;
       var halfOffsetWidth = undefined;
       var defaultLeft = undefined;
 
       halfOffsetWidth = this.anchorPreview.offsetWidth / 2;
       defaultLeft = this.base.options.diffLeft - halfOffsetWidth;
 
-      this.anchorPreview.style.top = Math.round(buttonHeight + boundary.bottom - this.base.options.diffTop + this.base.options.contentWindow.pageYOffset - this.anchorPreview.offsetHeight) + 'px';
+      this.anchorPreview.style.top = Math.round(buttonHeight + boundary.bottom - this.base.options.diffTop + this.base.options.contentWindow.pageYOffset - this.anchorPreview.offsetHeight) + 5 + 'px';
 
       if (middleBoundary < halfOffsetWidth) {
         this.anchorPreview.style.left = defaultLeft + halfOffsetWidth + 'px';
@@ -136,24 +185,61 @@ var MediumEditorAnchorPreviewExtension = (function () {
   }, {
     key: 'attachToEditables',
     value: function attachToEditables() {
-      var _this2 = this;
+      this.base.subscribe('editableMouseover', this.handleEditableMouseover.bind(this));
+      this.base.subscribe('editableKeydown', this.handleEditableKeydown.bind(this));
+    }
+  }, {
+    key: 'handleRemoveButtonClick',
+    value: function handleRemoveButtonClick(evt) {
+      var _this3 = this;
 
-      this.base.subscribe('editableMouseover', function (e) {
-        return _this2.handleEditableMouseover(e);
+      evt.preventDefault();
+      evt.stopPropagation();
+      var anchorExtension = this.base.getExtensionByName('anchor');
+      if (this.anchorToPreview.tagName && this.anchorToPreview.tagName.toLowerCase() === 'a') {
+        var range = this.base.options.ownerDocument.createRange();
+        range.selectNodeContents(this.anchorToPreview);
+        var win = this.base.options.contentWindow;
+        var sel = win.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        this.base.execAction('unlink');
+        sel.removeAllRanges();
+        if (win.getSelection) {
+          if (win.getSelection().empty) {
+            // Chrome
+            win.getSelection().empty();
+          } else if (win.getSelection().removeAllRanges) {
+            // Firefox
+            win.getSelection().removeAllRanges();
+          }
+        } else if (this.base.options.ownerDocument.selection) {
+          // IE?
+          this.base.options.ownerDocument.selection.empty();
+        }
+      }
+      this.hidePreview();
+      this.base.delay(function () {
+        if (_this3.base.toolbar) {
+          _this3.base.toolbar.hideToolbar();
+        }
       });
     }
   }, {
-    key: 'handleClick',
-    value: function handleClick() {
+    key: 'handleEditButtonClick',
+    value: function handleEditButtonClick(evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
       var anchorExtension = this.base.getExtensionByName('anchor');
       var activeAnchor = this.activeAnchor;
 
       if (anchorExtension && activeAnchor) {
-        this.base.selectedParentElement(this.activeAnchor);
+        this.base.selectElement(this.activeAnchor);
 
         this.base.delay(function () {
           if (activeAnchor) {
-            anchorExtension.showForm(activeAnchor.attributes.href.value);
+            var targetValue = activeAnchor.attributes.target && activeAnchor.attributes.target.nodeValue === '_blank';
+            anchorExtension.showForm(activeAnchor.attributes.href.value, targetValue);
             activeAnchor = null;
           }
         });
@@ -162,34 +248,59 @@ var MediumEditorAnchorPreviewExtension = (function () {
       }
     }
   }, {
+    key: 'handleEditableKeydown',
+    value: function handleEditableKeydown() {
+      var _this4 = this;
+
+      if (this.activeAnchor) {
+        this.base.delay(function () {
+          if (_this4.activeAnchor) {
+            _this4.activeAnchor = null;
+          }
+        });
+        this.hidePreview();
+      }
+    }
+  }, {
+    key: 'handleClick',
+    value: function handleClick() {
+      if (this.activeAnchor) {
+        this.base.options.contentWindow.open(this.activeAnchor.href);
+      }
+    }
+  }, {
     key: 'handleAnchorMouseout',
     value: function handleAnchorMouseout() {
-      this.anchorPreview = null;
+      //this.anchorToPreview = null;
       this.base.off(this.activeAnchor, 'mouseout', this.instance_handleAnchorMouseout);
       this.instance_handleAnchorMouseout = null;
     }
   }, {
     key: 'handleEditableMouseover',
     value: function handleEditableMouseover(evt) {
-      var _this3 = this;
+      var _this5 = this;
 
       if (evt.target && evt.target.tagName.toLowerCase() === 'a') {
-        if (!/href=["']\S+["']/.test(event.target.outerHTML) || /href=["']#\S+["']/.test(event.target.outerHTML)) {
+        if (!/href=["']\S+["']/.test(evt.target.outerHTML) || /href=["']#\S+["']/.test(evt.target.outerHTML)) {
           return true;
         }
 
         if (this.base.toolbar && this.base.toolbar.isDisplayed()) {
-          return null;
+          return true;
         }
 
-        this.anchorPreview = evt.target;
+        if (this.activeAnchor && this.activeAnchor !== evt.target) {
+          this.detachPreviewHandlers();
+        }
+
+        this.anchorToPreview = evt.target;
 
         this.instance_handleAnchorMouseout = this.handleAnchorMouseout.bind(this);
-        this.base.on(this.anchorPreview, 'mouseout', this.instance_handleAnchorMouseout);
+        this.base.on(this.anchorToPreview, 'mouseout', this.instance_handleAnchorMouseout);
 
         this.base.delay(function () {
-          if (_this3.anchorPreview) {
-            _this3.showPreview(_this3.anchorPreview);
+          if (_this5.anchorToPreview) {
+            _this5.showPreview(_this5.anchorToPreview);
           }
         });
       }
@@ -225,10 +336,10 @@ var MediumEditorAnchorPreviewExtension = (function () {
       clearInterval(this.interval_timer);
       if (this.instance_handlePreviewMouseover) {
         this.base.off(this.anchorPreview, 'mouseover', this.instance_handlePreviewMouseover);
-        this.base.off(this.anchorPreview, 'mouseout', this.instance_handleAnchorMouseout);
+        this.base.off(this.anchorPreview, 'mouseout', this.instance_handlePreviewMouseout);
         if (this.activeAnchor) {
           this.base.off(this.activeAnchor, 'mouseover', this.instance_handlePreviewMouseover);
-          this.base.off(this.activeAnchor, 'mouseout', this.instance_handleAnchorMouseout);
+          this.base.off(this.activeAnchor, 'mouseout', this.instance_handlePreviewMouseout);
         }
       }
       this.hidePreview();
@@ -241,15 +352,15 @@ var MediumEditorAnchorPreviewExtension = (function () {
       this.lastOver = new Date().getTime();
       this.hovering = true;
 
-      this.instance_handlePreviewMouseover = this.handleEditableMouseover.bind(this);
-      this.instance_handleAnchorMouseout = this.handleEditableMouseout.bind(this);
+      this.instance_handlePreviewMouseover = this.handlePreviewMouseover.bind(this);
+      this.instance_handlePreviewMouseout = this.handlePreviewMouseout.bind(this);
 
       this.interval_timer = setInterval(this.updatePreview.bind(this), 200);
 
       this.base.on(this.anchorPreview, 'mouseover', this.instance_handlePreviewMouseover);
-      this.base.on(this.anchorPreview, 'mouseout', this.instance_handleAnchorMouseout);
+      this.base.on(this.anchorPreview, 'mouseout', this.instance_handlePreviewMouseout);
       this.base.on(this.activeAnchor, 'mouseover', this.instance_handlePreviewMouseover);
-      this.base.on(this.activeAnchor, 'mouseout', this.instance_handleAnchorMouseout);
+      this.base.on(this.activeAnchor, 'mouseout', this.instance_handlePreviewMouseout);
     }
   }]);
 
